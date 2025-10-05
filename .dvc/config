@@ -1,0 +1,4 @@
+[core]
+    remote = gcs_remote
+['remote "gcs_remote"']
+    url = gs://mlops-course-cellular-gift-473007-n6-unique/dvc-storage
