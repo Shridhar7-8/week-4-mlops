@@ -1,6 +1,6 @@
 pandas
 scikit-learn
 dvc[gcs]
-google-cloud-aiplatformpytest
+google-cloud-aiplatform
 cml
 pytest
