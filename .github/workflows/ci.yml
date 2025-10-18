@@ -1,0 +1,61 @@
+    name: Iris Model CI Pipeline
+
+    # This section defines when the workflow will run.
+    # It triggers on pushes to main or dev, and on pull requests targeting main.
+    on:
+      push:
+        branches: [ main, dev ]
+      pull_request:
+        branches: [ main ]
+
+    jobs:
+      test-and-report:
+        # The job will run on a fresh Ubuntu virtual machine provided by GitHub
+        runs-on: ubuntu-latest
+        steps:
+          # Step 1: Checks out your repository's code so the job can access it
+          - name: Checkout repository
+            uses: actions/checkout@v3
+
+          # Step 2: Sets up a Python 3.9 environment
+          - name: Set up Python 3.9
+            uses: actions/setup-python@v3
+            with:
+              python-version: '3.9'
+
+          # Step 3: Installs all packages from your requirements.txt file
+          - name: Install dependencies
+            run: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+
+          # Step 4: Securely authenticates with Google Cloud using your secret
+          - name: Setup DVC with GCS Credentials
+            run: |
+              # This decodes your secret and creates a temporary credentials file
+              echo "${{ secrets.GCS_SA_KEY }}" | base64 -d > gcs_key.json
+              # This tells DVC and other Google libraries where to find the credentials
+              echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gcs_key.json" >> $GITHUB_ENV
+
+          # Step 5: Pulls the data and model files tracked by DVC from your GCS bucket
+          - name: Fetch DVC-tracked data and model
+            run: dvc pull
+
+          # Step 6: Runs your pytest tests
+          - name: Run Pytest sanity checks
+            run: pytest --verbose
+
+          # Step 7: Creates a report and posts it as a comment on the pull request
+          - name: Create CML Report for Pull Request
+            # This step is configured to ONLY run for pull requests
+            if: github.event_name == 'pull_request'
+            env:
+              # The GITHUB_TOKEN is a special secret provided by GitHub
+              # that allows CML to post comments on your behalf
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+              # Run the tests a second time and save the output to a text file
+              pytest > report.txt
+              echo "## ✅ Pytest Evaluation Report" >> report.txt
+              # Use CML to create a comment from the contents of the report file
+              cml comment create report.txt

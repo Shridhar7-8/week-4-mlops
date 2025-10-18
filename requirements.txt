@@ -1,4 +1,6 @@
 pandas
 scikit-learn
 dvc[gcs]
-google-cloud-aiplatform
+google-cloud-aiplatformpytest
+cml
+pytest
