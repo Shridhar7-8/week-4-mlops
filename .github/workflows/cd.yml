@@ -74,7 +74,7 @@ jobs:
     - name: Prepare K8s Manifest
       run: |
         # This 'sed' command finds the placeholder and replaces it with the real image path
-        sed -i "s|IMAGE_PLACEHOLDER|${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yml
+        sed -i "s|IMAGE_PLACEHOLDER|${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GGCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yml
         echo "--- Updated k8s/deployment.yml: ---"
         cat k8s/deployment.yml
         
@@ -87,4 +87,4 @@ jobs:
     - name: Show Service IP
       run: |
         echo "Deployment successful! Wait a minute for the LoadBalancer IP to be assigned."
-      kubectl get service iris-api-service
+        kubectl get service iris-api-service
