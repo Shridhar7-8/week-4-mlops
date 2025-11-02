@@ -5,8 +5,8 @@ FROM python:3.9-slim as builder
 WORKDIR /build
 
 # Install DVC for pulling the model
-# We must install the DVC [gcs] extra to talk to Google Cloud Storage
-RUN pip install "dvc[gcs]"
+# We use [gs] for Google Storage (GCS)
+RUN pip install "dvc[gs]"
 
 # Copy only the DVC files needed to pull
 COPY .dvc .dvc
