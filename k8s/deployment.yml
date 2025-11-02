@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris-api-deployment
+spec:
+  replicas: 2 # Run 2 copies of our app
+  selector:
+    matchLabels:
+      app: iris-api
+  template:
+    metadata:
+      labels:
+        app: iris-api
+    spec:
+      containers:
+      - name: iris-api
+        # This is a placeholder! The CI/CD pipeline will replace it.
+        image: IMAGE_PLACEHOLDER
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-api-service
+spec:
+  type: LoadBalancer # Creates a public IP address (Load Balancer)
+  selector:
+    app: iris-api
+  ports:
+  - port: 80 # Public port
+    targetPort: 8080 # App's internal port
