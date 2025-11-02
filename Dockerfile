@@ -4,18 +4,21 @@ FROM python:3.9-slim as builder
 
 WORKDIR /build
 
-# Install DVC for pulling the model
-# We use [gs] for Google Storage (GCS)
-RUN pip install "dvc[gs]"
+# Install git (which DVC needs) and DVC with Google Storage support
+RUN apt-get update && apt-get install -y git && \
+    pip install "dvc[gs]"
+
+# Initialize a dummy git repository so DVC doesn't complain
+RUN git init
 
 # Copy only the DVC files needed to pull
 COPY .dvc .dvc
 COPY artifacts/model.joblib.dvc artifacts/
 COPY .dvcignore .dvcignore
 
-# Pull the model file from DVC remote
-# We add --no-scm to tell DVC not to look for a .git repository
-RUN dvc pull artifacts/model.joblib -r gcs_remote --force --no-scm
+# Pull the model file from DVC remote.
+# We no longer need --no-scm because we ran 'git init'
+RUN dvc pull artifacts/model.joblib -r gcs_remote --force
 
 # --- Final Stage ---
 # Use a lightweight image for the final container
