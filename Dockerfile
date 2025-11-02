@@ -16,9 +16,11 @@ COPY .dvc .dvc
 COPY artifacts/model.joblib.dvc artifacts/
 COPY .dvcignore .dvcignore
 
-# Pull the model file from DVC remote.
-# We no longer need --no-scm because we ran 'git init'
-RUN dvc pull artifacts/model.joblib -r gcs_remote --force
+# Mount the secret key file, set it as the credentials, and then pull.
+# The 'gcp-sa-key' secret is passed in via the 'docker build' command in the cd.yml workflow.
+RUN --mount=type=secret,id=gcp-sa-key,dst=/tmp/gcp_sa_key.json \
+    export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json && \
+    dvc pull artifacts/model.joblib -r gcs_remote --force
 
 # --- Final Stage ---
 # Use a lightweight image for the final container
@@ -41,3 +43,5 @@ EXPOSE 8080
 
 # Run the app using Uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+
