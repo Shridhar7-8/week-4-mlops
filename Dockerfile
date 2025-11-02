@@ -1,22 +1,40 @@
 # --- Build Stage ---
+# Use a full Python image to install dependencies
 FROM python:3.9-slim as builder
+
 WORKDIR /build
+
+# Install DVC for pulling the model
+# We must install the DVC [gcs] extra to talk to Google Cloud Storage
 RUN pip install "dvc[gcs]"
+
+# Copy only the DVC files needed to pull
 COPY .dvc .dvc
 COPY artifacts/model.joblib.dvc artifacts/
 COPY .dvcignore .dvcignore
-RUN dvc pull artifacts/model.joblib -r gcs_remote --force
+
+# Pull the model file from DVC remote
+# We add --no-scm to tell DVC not to look for a .git repository
+RUN dvc pull artifacts/model.joblib -r gcs_remote --force --no-scm
 
 # --- Final Stage ---
+# Use a lightweight image for the final container
 FROM python:3.9-slim
+
 WORKDIR /app
+
+# Copy API requirements and install them
 COPY app/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the API application code
 COPY app/ .
+
+# Copy the model we pulled in the builder stage
 COPY --from=builder /build/artifacts/model.joblib /artifacts/model.joblib
+
+# Expose the port the app will run on
 EXPOSE 8080
 
-# === THIS IS THE ONLY LINE THAT CHANGES ===
 # Run the app using Uvicorn
-# "main:app" means "the 'app' object inside the 'main.py' file"
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
